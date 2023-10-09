@@ -2,8 +2,10 @@ package fr.cs.bazarshop.service.serviceImpl;
 
 import fr.cs.bazarshop.dto.ProductDto;
 import fr.cs.bazarshop.entity.Product;
+import fr.cs.bazarshop.exeption.CategoryNotFoundException;
 import fr.cs.bazarshop.exeption.ProductNotFoundException;
 import fr.cs.bazarshop.mapper.ProductMapper;
+import fr.cs.bazarshop.repository.CategoryRepository;
 import fr.cs.bazarshop.repository.ProductRepository;
 import fr.cs.bazarshop.service.ProductService;
 import jakarta.transaction.Transactional;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
 
     @Override
@@ -27,15 +30,10 @@ public class ProductServiceImpl implements ProductService {
 
         // Convertissez ProductDto en entité Product
         Product product = productMapper.toProduct(productDto);
-
         // Enregistrez le produit dans la base de données
         product = productRepository.save(product);
-
-
-
         // Enregistrez le produit dans la base de données
         product = productRepository.save(product);
-
         // Convertissez l'entité Product en ProductDto et retournez-le
         return productMapper.toProductDto(product);
     }
@@ -85,5 +83,26 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
+    @Override
+    public ProductDto updateProductWithImage(Integer id, ProductDto updatedProductDto) {
+        // Vérifiez si le produit existe
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Le produit avec l'ID spécifié n'existe pas"));
 
+        // Mettez à jour les détails du produit avec la nouvelle image
+        existingProduct.setProductName(updatedProductDto.getProductName());
+        existingProduct.setDescription(updatedProductDto.getDescription());
+        existingProduct.setRating(updatedProductDto.getRating());
+        existingProduct.setProductQuantity(updatedProductDto.getProductQuantity());
+        existingProduct.setPrice(updatedProductDto.getPrice());
+        existingProduct.setCategory(categoryRepository.findById(updatedProductDto.getCategoryDto().getCategoryId())
+                .orElseThrow(() -> new CategoryNotFoundException("La catégorie spécifiée n'existe pas")));
+        existingProduct.setImageName(updatedProductDto.getImageName());
+
+        // Enregistrez les modifications
+        Product updatedProduct = productRepository.save(existingProduct);
+
+        // Convertissez l'entité Product en ProductDto et retournez-le
+        return productMapper.toProductDto(updatedProduct);
+    }
 }

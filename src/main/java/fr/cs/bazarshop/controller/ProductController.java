@@ -164,7 +164,98 @@ public class ProductController {
         }
     }
 
+    @PutMapping("/updateProductImageUrl/{id}")
+    public ResponseEntity<ProductDto> updateProductImageUrl(
+            @PathVariable Integer id,
+            @RequestParam("productName") String productName,
+            @RequestParam("description") String description,
+            @RequestParam("rating") Float rating,
+            @RequestParam("productQuantity") int productQuantity,
+            @RequestParam("price") Double price,
+            @RequestParam("categoryId") Integer categoryId,
+            @RequestParam("imageFile") MultipartFile imageFile) throws IOException {
+
+        // Vérifiez si le fichier image est présent
+        if (imageFile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        // Traitez le fichier image ici (sauvegarde, validation, etc.)
+        // Vous pouvez utiliser l'objet 'imageFile' pour accéder au fichier
+
+        // Utilisez votre service d'enregistrement d'image pour sauvegarder la nouvelle image et obtenir son URL
+        String newImageUrl = imageStorageService.saveImage(imageFile);
+
+        // Récupérez le produit existant par son ID
+        Optional<ProductDto> existingProductOptional = productService.findProductById(id);
+
+        if (existingProductOptional.isPresent()) {
+            ProductDto existingProduct = existingProductOptional.get();
+
+            // Assurez-vous d'abord d'obtenir l'objet CategoryDto correspondant à partir de categoryId
+            CategoryDto categoryDto = CategoryDto.builder().categoryId(categoryId).build();
+
+            // Mettez à jour les propriétés du produit avec les nouvelles valeurs
+            existingProduct.setProductName(productName);
+            existingProduct.setDescription(description);
+            existingProduct.setRating(rating);
+            existingProduct.setProductQuantity(productQuantity);
+            existingProduct.setPrice(price);
+            existingProduct.setCategoryDto(categoryDto); // Assignez l'objet CategoryDto
+
+            // Appelez la méthode de mise à jour du service ProductService en utilisant PUT
+            ProductDto updatedProduct = productService.updateProduct(id, existingProduct);
+
+            return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
+        } else {
+            // Le produit avec l'ID spécifié n'existe pas
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 
 
+    @PutMapping ("/updateProductWithImage/{id}")
+    public ResponseEntity<ProductDto> updateProductWithImage(
+            @PathVariable Integer id,
+            @RequestParam("productName") String productName,
+            @RequestParam("description") String description,
+            @RequestParam("rating") Float rating,
+            @RequestParam("productQuantity") Integer productQuantity,
+            @RequestParam("price") Double price,
+            @RequestParam("categoryId") Integer categoryId,
+            @RequestParam("imageFile") MultipartFile imageFile) throws IOException {
 
+        // Vérifiez si le fichier image est présent
+        if (imageFile.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        // Traitez le fichier image ici (sauvegarde, validation, etc.)
+        // Vous pouvez utiliser l'objet 'imageFile' pour accéder au fichier
+
+        // Utilisez votre service d'enregistrement d'image pour sauvegarder la nouvelle image et obtenir son URL
+        String imageUrl = imageStorageService.saveImage(imageFile);
+
+        // Créez un objet ProductDto avec les détails mis à jour du produit, y compris la nouvelle URL de l'image
+        ProductDto updatedProductDto = ProductDto.builder()
+                .id(id)
+                .productName(productName)
+                .description(description)
+                .rating(rating)
+                .productQuantity(productQuantity)
+                .price(price)
+                .categoryDto(CategoryDto.builder().categoryId(categoryId).build())
+                .imageName(imageUrl) // Ajoutez la nouvelle URL de l'image
+                .build();
+
+        // Mettez à jour le produit en utilisant le service ProductService
+        try {
+            ProductDto updatedProduct = productService.updateProductWithImage(id, updatedProductDto);
+            return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
+        } catch (ProductNotFoundException ex) {
+            String errorMessage = "Le produit avec l'ID " + id + " n'existe pas.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+}
 }

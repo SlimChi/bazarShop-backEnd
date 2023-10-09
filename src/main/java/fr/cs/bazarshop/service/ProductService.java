@@ -19,4 +19,5 @@ public interface ProductService {
     ProductDto updateProduct(Integer id, ProductDto productDto);
 
 
+    ProductDto updateProductWithImage(Integer id, ProductDto updatedProductDto);
 }

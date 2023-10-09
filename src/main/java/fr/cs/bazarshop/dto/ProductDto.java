@@ -21,8 +21,5 @@ public class ProductDto {
     private CategoryDto categoryDto;
     private String imageName; // Champ pour le nom du fichier de l'image
 
-
-
-
     // Constructeur
 }
